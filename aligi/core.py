@@ -4,12 +4,17 @@ import base64
 from aligi import types
 
 
-class Request:
+class HTTPRequest:
+    """解析阿里云API网关传递的数据"""
 
     def __init__(self, event: str, context: types.FCContext):
         self.context = context
         self.event = json.loads(event)
-        self.header = self.event['headers']
+        self._header = {
+            "CONTENT-TYPE": "text/plain",
+            "CONTENT-LENGTH": 0,
+        }
+        self._header.update({k.upper(): v for k, v in self.event['headers'].items()})
 
     @property
     def path(self) -> str:
@@ -22,10 +27,6 @@ class Request:
     @property
     def header(self) -> dict:
         return self._header
-
-    @header.setter
-    def set_header(self, value: dict) -> None:
-        self._header = {k.upper(): v for k, v in value.items()}
 
     @property
     def query(self) -> dict:

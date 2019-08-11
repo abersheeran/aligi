@@ -81,4 +81,14 @@ class FCContext(Generic[TypeVar('T')]):
         self.account_id = account_id
 
 
-WSGIApp = typing.Callable[typing.Dict, typing.Callable(str, typing.Iterable(typing.Tuple(str, str)))]
+WSGIApp = typing.Callable[
+    [
+        typing.Dict,
+        typing.Callable[
+            [
+                str,
+                typing.Iterable[typing.Tuple[str, str]]
+            ], None
+        ]
+    ], typing.Iterable
+]
