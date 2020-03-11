@@ -1,9 +1,9 @@
 import json
 
-from flask import Flask
+from bottle import Bottle
 from aligi import WSGI
 
-app = Flask(__name__)
+app = Bottle()
 
 
 @app.route("/")

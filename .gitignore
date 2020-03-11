@@ -95,16 +95,4 @@ ENV/
 .vscode/
 
 # example
-Werkzeug-0.15.5.dist-info
-werkzeug
-MarkupSafe-1.1.1.dist-info
-markupsafe
-Jinja2-2.10.1.dist-info
-jinja2
-itsdangerous-1.1.0.dist-info
-itsdangerous
-Flask-1.1.1.dist-info
-flask
-Click-7.0.dist-info
-click
-bin
+bottle.py
