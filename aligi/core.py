@@ -14,15 +14,15 @@ class HTTPRequest:
             "CONTENT-TYPE": "text/plain",
             "CONTENT-LENGTH": 0,
         }
-        self._header.update({k.upper(): v for k, v in self.event['headers'].items()})
+        self._header.update({k.upper(): v for k, v in self.event["headers"].items()})
 
     @property
     def path(self) -> str:
-        return self.event['path']
+        return self.event["path"]
 
     @property
     def method(self) -> str:
-        return self.event['httpMethod'].upper()
+        return self.event["httpMethod"].upper()
 
     @property
     def header(self) -> dict:
@@ -30,7 +30,7 @@ class HTTPRequest:
 
     @property
     def query(self) -> dict:
-        return self.event['queryParameters']
+        return self.event["queryParameters"]
 
     @property
     def query_string(self) -> str:
@@ -38,10 +38,10 @@ class HTTPRequest:
 
     @property
     def param(self) -> dict:
-        return self.event['pathParameters']
+        return self.event["pathParameters"]
 
     @property
     def body(self) -> bytes:
-        if self.event['isBase64Encoded']:
-            return base64.b64decode(self.event['body'])
-        return self.event['body'].encode("UTF-8")
+        if self.event["isBase64Encoded"]:
+            return base64.b64decode(self.event["body"])
+        return self.event["body"].encode("UTF-8")

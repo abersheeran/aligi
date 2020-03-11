@@ -1,5 +1,14 @@
 import typing
-from typing import TypeVar, Generic
+from typing import (
+    TypeVar,
+    Generic,
+    MutableMapping,
+    Any,
+    Iterable,
+    Callable,
+    Tuple,
+    Union,
+)
 
 
 def print_type(obj: typing.Any, suffix: str = ""):
@@ -13,28 +22,21 @@ def print_type(obj: typing.Any, suffix: str = ""):
         pass
 
 
-class Credentials(Generic[TypeVar('T')]):
-
-    def __init__(
-        self,
-        access_key_id: str,
-        access_key_secret: str,
-        security_token: str
-    ):
+class Credentials(Generic[TypeVar("T")]):
+    def __init__(self, access_key_id: str, access_key_secret: str, security_token: str):
         self.access_key_id = access_key_id
         self.access_key_secret = access_key_secret
         self.security_token = security_token
 
 
-class ServiceMeta(Generic[TypeVar('T')]):
-
+class ServiceMeta(Generic[TypeVar("T")]):
     def __init__(
         self,
         service_name: str,
         log_project: str,
         log_store: str,
         qualifier: str,
-        version_id: str
+        version_id: str,
     ):
         self.name = service_name
         self.log_project = log_project
@@ -43,16 +45,15 @@ class ServiceMeta(Generic[TypeVar('T')]):
         self.version_id = version_id
 
 
-class FunctionMeta(Generic[TypeVar('T')]):
-
+class FunctionMeta(Generic[TypeVar("T")]):
     def __init__(
-            self,
-            name: str,
-            handler: str,
-            memory: int,
-            timeout: int,
-            initializer: str,
-            initialization_timeout: int
+        self,
+        name: str,
+        handler: str,
+        memory: int,
+        timeout: int,
+        initializer: str,
+        initialization_timeout: int,
     ):
         self.name = name
         self.handler = handler
@@ -62,8 +63,7 @@ class FunctionMeta(Generic[TypeVar('T')]):
         self.initialization_timeout = initialization_timeout
 
 
-class FCContext(Generic[TypeVar('T')]):
-
+class FCContext(Generic[TypeVar("T")]):
     def __init__(
         self,
         account_id: str,
@@ -71,7 +71,7 @@ class FCContext(Generic[TypeVar('T')]):
         credentials: Credentials,
         function_meta: FunctionMeta,
         service_meta: ServiceMeta,
-        region: str
+        region: str,
     ):
         self.request_id = request_id
         self.credentials = credentials
@@ -81,14 +81,7 @@ class FCContext(Generic[TypeVar('T')]):
         self.account_id = account_id
 
 
-WSGIApp = typing.Callable[
-    [
-        typing.Dict,
-        typing.Callable[
-            [
-                str,
-                typing.Iterable[typing.Tuple[str, str]]
-            ], None
-        ]
-    ], typing.Iterable
-]
+# WSGI: view PEP3333
+Environ = MutableMapping[str, Any]
+StartResponse = Callable[[str, Iterable[Tuple[str, str]]], None]
+WSGIApp = Callable[[Environ, StartResponse], Iterable[Union[str, bytes]]]
