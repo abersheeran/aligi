@@ -41,3 +41,11 @@ handler = WSGI(app)
 其中`app`可以是任意一个标准 WSGI Application。
 
 在 Django 项目中，它一般在项目的`wsgi.py`里。
+
+## 参考文档
+
+阿里云文档:
+
+- [HTTP 触发器](https://help.aliyun.com/document_detail/74756.html?spm=a2c4g.11186623.2.29.4a4b6482rl6rYZ#h2--http-2)
+
+- [API 网关触发器](https://help.aliyun.com/document_detail/74800.html?spm=a2c4g.11186623.6.696.24bd2ebcuaTlC2)

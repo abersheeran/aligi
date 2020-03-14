@@ -4,11 +4,48 @@ import base64
 from typing import Dict, Any, Union, Iterable, Tuple
 
 from aligi.types import FCContext, WSGIApp, Environ, StartResponse
-from aligi.core import HTTPRequest
 
 
-class ErrorWriter:
-    """处理错误日志则继承于此"""
+class HTTPRequest:
+    """
+    包装阿里云 API 网关传入参数
+    """
+
+    def __init__(self, event: str, context: FCContext):
+        self.context = context
+        self.event = json.loads(event)
+
+    @property
+    def method(self) -> str:
+        return self.event["httpMethod"].upper()
+
+    @property
+    def path(self) -> str:
+        return self.event["path"]
+
+    @property
+    def header(self) -> Dict[str, str]:
+        return {k.upper(): v for k, v in self.event["headers"].items()}
+
+    @property
+    def query(self) -> Dict[str, Any]:
+        return self.event["queryParameters"]
+
+    @property
+    def param(self) -> Dict[str, Any]:
+        return self.event["pathParameters"]
+
+    @property
+    def body(self) -> bytes:
+        if self.event["isBase64Encoded"]:
+            return base64.b64decode(self.event["body"])
+        return self.event["body"].encode("utf8")
+
+
+class Errors:
+    """
+    wsgi.errors
+    """
 
     def flush(self) -> None:
         pass
@@ -20,10 +57,16 @@ class ErrorWriter:
         pass
 
 
-def build_environ(
-    request: HTTPRequest, errors: ErrorWriter = ErrorWriter()
-) -> Dict[str, Any]:
+def build_environ(request: HTTPRequest, errors: Errors) -> Dict[str, Any]:
+    """
+    参考 https://www.python.org/dev/peps/pep-3333/ 构建 environ
+    """
+    headers = {f"HTTP_{k.replace('-','_')}": v for k, v in request.header.items()}
     environ = {
+        # 保持与阿里云函数计算 HTTP 触发器的一致
+        "fc.context": request.context,
+        "fc.request_uri": request.path,
+        # WSGI 标准值
         "wsgi.version": (1, 0),
         "wsgi.url_scheme": "http",
         "wsgi.input": io.BytesIO(request.body),
@@ -31,22 +74,17 @@ def build_environ(
         "wsgi.multithread": False,
         "wsgi.multiprocess": False,
         "wsgi.run_once": True,
+        "SERVER_NAME": "127.0.0.1",
+        "SERVER_PORT": "80",
+        "SERVER_PROTOCOL": "HTTP/1.0",
+        "REQUEST_METHOD": request.method,
+        "SCRIPT_NAME": "",
+        "PATH_INFO": request.path,
+        "QUERY_STRING": "?" + "&".join([f"{k}={v}" for k, v in request.query.items()]),
+        "CONTENT_TYPE": headers.get("HTTP_CONTENT_TYPE", ""),
+        "CONTENT_LENGTH": headers.get("HTTP_CONTENT_LENGTH", ""),
     }
-
-    environ.update(
-        {
-            "REQUEST_METHOD": request.method,
-            "SCRIPT_NAME": "",
-            "PATH_INFO": request.path,
-            "QUERY_STRING": request.query_string,
-            "CONTENT_TYPE": request.header["CONTENT-TYPE"],
-            "CONTENT_LENGTH": request.header["CONTENT-LENGTH"],
-            "SERVER_NAME": "127.0.0.1",
-            "SERVER_PORT": "80",
-            "SERVER_PROTOCOL": "HTTP/1.0",
-        }
-    )
-    environ.update({f"HTTP_{k}": v for k, v in request.header.items()})
+    environ.update(headers)
     return environ
 
 
@@ -76,7 +114,7 @@ class WSGI:
     包裹 WSGI application, 使其同时可接受 WSGI 调用/阿里云 API 网关调用
     """
 
-    def __init__(self, app: WSGIApp, errors: ErrorWriter = ErrorWriter()):
+    def __init__(self, app: WSGIApp, errors: Errors = Errors()):
         self.app = app
         self.errors = errors
 
