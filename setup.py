@@ -17,15 +17,7 @@ URL = "https://github.com/abersheeran/aligi"
 EMAIL = "abersheeran@qq.com"
 AUTHOR = "AberSheeran"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = ".".join(aligi_version)
-
-# What packages are required for this module to be executed?
-REQUIRED = []
-
-# What packages are optional?
-EXTRAS = {
-    # 'fancy feature': ['django'],
-}
+VERSION = ".".join([str(_) for _ in aligi_version])
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -70,12 +62,12 @@ class UploadCommand(Command):
         self.status("Building Source and Wheel (universal) distribution…")
         os.system("{0} setup.py sdist bdist_wheel --universal".format(sys.executable))
 
-        self.status("Uploading the package to PyPI via Twine…")
-        os.system("twine upload dist/*")
+        # self.status("Uploading the package to PyPI via Twine…")
+        # os.system("twine upload dist/*")
 
-        self.status("Pushing git tags…")
-        os.system("git tag v{0}".format(VERSION))
-        os.system("git push --tags")
+        # self.status("Pushing git tags…")
+        # os.system("git tag v{0}".format(VERSION))
+        # os.system("git push --tags")
 
         sys.exit()
 
@@ -91,10 +83,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=["aligi"],
-    install_requires=REQUIRED,
-    extras_require=EXTRAS,
-    include_package_data=True,
+    py_modules=["aligi"],
     license="MIT",
     keywords=["aliyun", "api", "serverless", "python"],
     classifiers=[
