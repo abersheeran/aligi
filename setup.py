@@ -6,7 +6,9 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import setup, Command
+
+from aligi import __version__ as aligi_version
 
 # Package meta-data.
 NAME = "aligi"
@@ -15,7 +17,7 @@ URL = "https://github.com/abersheeran/aligi"
 EMAIL = "abersheeran@qq.com"
 AUTHOR = "AberSheeran"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = None
+VERSION = ".".join(aligi_version)
 
 # What packages are required for this module to be executed?
 REQUIRED = []
@@ -39,15 +41,6 @@ try:
         long_description = "\n" + f.read()
 except FileNotFoundError:
     long_description = DESCRIPTION
-
-# Load the package's __version__.py module as a dictionary.
-about = {}
-if not VERSION:
-    project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
-    with open(os.path.join(here, project_slug, "__version__.py")) as f:
-        exec(f.read(), about)
-else:
-    about["__version__"] = VERSION
 
 
 class UploadCommand(Command):
@@ -81,7 +74,7 @@ class UploadCommand(Command):
         os.system("twine upload dist/*")
 
         self.status("Pushing git tags…")
-        os.system("git tag v{0}".format(about["__version__"]))
+        os.system("git tag v{0}".format(VERSION))
         os.system("git push --tags")
 
         sys.exit()
@@ -90,7 +83,7 @@ class UploadCommand(Command):
 # Where the magic happens:
 setup(
     name=NAME,
-    version=about["__version__"],
+    version=VERSION,
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -111,5 +104,5 @@ setup(
         "Programming Language :: Python :: 3.6",
     ],
     # $ setup.py publish support.
-    cmdclass={"upload": UploadCommand,},
+    cmdclass={"upload": UploadCommand},
 )
