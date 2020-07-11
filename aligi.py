@@ -192,11 +192,7 @@ class WSGI:
         resp_dict = {}
         environ = build_environ(request, self.errors)
         start_response = create_start_response(resp_dict)
-        # 迫使 body 在任何时候都为 bytes
-        body: Iterable[bytes] = [
-            block if isinstance(block, bytes) else block.encode("utf8")
-            for block in self.app(environ, start_response)
-        ]
+        body: Iterable[bytes] = [block for block in self.app(environ, start_response)]
 
         resp_dict.update(
             {
