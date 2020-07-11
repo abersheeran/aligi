@@ -1,6 +1,6 @@
 import json
 
-from bottle import Bottle
+from bottle import Bottle, request
 from aligi import WSGI
 
 app = Bottle()
@@ -8,6 +8,7 @@ app = Bottle()
 
 @app.route("/")
 def hello_world():
+    print(request.environ)
     return "Hello, World!"
 
 
@@ -22,7 +23,7 @@ if __name__ == "__main__":
                 {
                     "path": "/",
                     "httpMethod": "GET",
-                    "headers": {"Content-Length": 0, "Content-Type": "text/plain"},
+                    "headers": {"Content-Type": "text/plain", "X-Only-Test": "aligi"},
                     "queryParameters": {},
                     "pathParameters": {},
                     "body": "",

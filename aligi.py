@@ -1,6 +1,7 @@
 import io
 import json
 import base64
+from types import TracebackType
 from typing import (
     TypeVar,
     Generic,
@@ -11,9 +12,11 @@ from typing import (
     Union,
     Dict,
     MutableMapping,
+    Type,
+    Optional,
 )
 
-__version__ = (1, 0, 0)
+__version__ = (1, 0, 1)
 
 
 def print_type(obj: Any, suffix: str = ""):
@@ -87,7 +90,7 @@ class HTTPRequest:
 
     @property
     def header(self) -> Dict[str, str]:
-        return {k.upper(): v for k, v in self.event["headers"].items()}
+        return {k.lower(): v for k, v in self.event["headers"].items()}
 
     @property
     def query(self) -> Dict[str, Any]:
@@ -123,7 +126,9 @@ def build_environ(request: HTTPRequest, errors: Errors) -> Dict[str, Any]:
     """
     参考 https://www.python.org/dev/peps/pep-3333/ 构建 environ
     """
-    headers = {f"HTTP_{k.replace('-','_')}": v for k, v in request.header.items()}
+    headers = {
+        f"HTTP_{k.upper().replace('-','_')}": v for k, v in request.header.items()
+    }
     environ = {
         # 保持与阿里云函数计算 HTTP 触发器的一致
         "fc.context": request.context,
@@ -143,8 +148,8 @@ def build_environ(request: HTTPRequest, errors: Errors) -> Dict[str, Any]:
         "SCRIPT_NAME": "",
         "PATH_INFO": request.path,
         "QUERY_STRING": "?" + "&".join([f"{k}={v}" for k, v in request.query.items()]),
-        "CONTENT_TYPE": headers.get("HTTP_CONTENT_TYPE", ""),
-        "CONTENT_LENGTH": headers.get("HTTP_CONTENT_LENGTH", ""),
+        "CONTENT_TYPE": headers.pop("HTTP_CONTENT_TYPE", ""),
+        "CONTENT_LENGTH": headers.pop("HTTP_CONTENT_LENGTH", ""),
     }
     environ.update(headers)
     return environ
@@ -156,7 +161,11 @@ def create_start_response(data: dict) -> StartResponse:
     """
 
     def start_response(
-        status: str, headers: Iterable[Tuple[str, str]], exc_info: str = "",
+        status: str,
+        headers: Iterable[Tuple[str, str]],
+        exc_info: Tuple[
+            Type[BaseException], BaseException, Optional[TracebackType]
+        ] = None,
     ) -> None:
         """
         WSGI 标准 start_response, 传递 status code 与 headers
@@ -167,6 +176,8 @@ def create_start_response(data: dict) -> StartResponse:
                 "headers": {header[0]: header[1] for header in headers},
             }
         )
+        if exc_info is not None:
+            raise exc_info[1]
 
     return start_response
 
