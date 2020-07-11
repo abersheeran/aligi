@@ -65,7 +65,7 @@ class FCContext(Generic[TypeVar("T")]):
 # WSGI: view PEP3333
 Environ = MutableMapping[str, Any]
 StartResponse = Callable[[str, Iterable[Tuple[str, str]]], None]
-WSGIApp = Callable[[Environ, StartResponse], Iterable[Union[str, bytes]]]
+WSGIApp = Callable[[Environ, StartResponse], Iterable[bytes]]
 
 
 class HTTPRequest:
@@ -184,7 +184,7 @@ class WSGI:
         self,
         event_or_environ: Union[str, Environ],
         context_or_start_response: Union[FCContext, StartResponse],
-    ) -> Union[Iterable[Union[str, bytes]], str]:
+    ) -> Union[Iterable[bytes], str]:
         if not isinstance(event_or_environ, str):  # WSGI 接口调用
             return self.app(event_or_environ, context_or_start_response)
         # 处理 API 网关调用
