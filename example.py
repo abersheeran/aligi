@@ -29,7 +29,7 @@ if __name__ == "__main__":
                     "body": "",
                     "isBase64Encoded": False,
                 }
-            ),
+            ).encode("utf8"),
             None,
         )
     )

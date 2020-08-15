@@ -1,22 +1,26 @@
 import io
 import json
 import base64
+import typing
 from types import TracebackType
 from typing import (
-    TypeVar,
-    Generic,
     Any,
     Iterable,
     Callable,
     Tuple,
-    Union,
     Dict,
     MutableMapping,
     Type,
     Optional,
 )
 
-__version__ = (1, 0, 1)
+__version__ = (1, 1, 0)
+
+
+#########################################
+# Context 类型定义
+# https://help.aliyun.com/document_detail/158208.html#title-88g-cnq-6mb
+#########################################
 
 
 def print_type(obj: Any, suffix: str = ""):
@@ -33,13 +37,13 @@ def print_type(obj: Any, suffix: str = ""):
         pass
 
 
-class Credentials(Generic[TypeVar("T")]):
+class Credentials:
     access_key_id: str
     access_key_secret: str
     security_token: str
 
 
-class ServiceMeta(Generic[TypeVar("T")]):
+class ServiceMeta:
     name: str
     log_project: str
     log_store: str
@@ -47,7 +51,7 @@ class ServiceMeta(Generic[TypeVar("T")]):
     version_id: str
 
 
-class FunctionMeta(Generic[TypeVar("T")]):
+class FunctionMeta:
     name: str
     handler: str
     memory: int
@@ -56,7 +60,7 @@ class FunctionMeta(Generic[TypeVar("T")]):
     initialization_timeout: int
 
 
-class FCContext(Generic[TypeVar("T")]):
+class FCContext:
     account_id: str
     request_id: str
     credentials: Credentials
@@ -66,8 +70,12 @@ class FCContext(Generic[TypeVar("T")]):
 
 
 # WSGI: view PEP3333
+ExcInfo = Tuple[Type[BaseException], BaseException, Optional[TracebackType]]
+
 Environ = MutableMapping[str, Any]
-StartResponse = Callable[[str, Iterable[Tuple[str, str]]], None]
+
+StartResponse = Callable[[str, Iterable[Tuple[str, str]], Optional[ExcInfo]], None]
+
 WSGIApp = Callable[[Environ, StartResponse], Iterable[bytes]]
 
 
@@ -76,7 +84,7 @@ class HTTPRequest:
     包装阿里云 API 网关传入参数
     """
 
-    def __init__(self, event: str, context: FCContext):
+    def __init__(self, event: bytes, context: FCContext):
         self.context = context
         self.event = json.loads(event)
 
@@ -191,16 +199,26 @@ class WSGI:
         self.app = app
         self.errors = errors
 
+    @typing.overload
+    def __call__(self, event: bytes, context: FCContext) -> str:
+        """
+        阿里云 API 网关触发器
+        """
+
+    @typing.overload
     def __call__(
-        self,
-        event_or_environ: Union[str, Environ],
-        context_or_start_response: Union[FCContext, StartResponse],
-    ) -> Union[Iterable[bytes], str]:
-        if not isinstance(event_or_environ, str):  # WSGI 接口调用
+        self, environ: Environ, start_response: StartResponse
+    ) -> Iterable[bytes]:
+        """
+        阿里云 HTTP 触发器: WSGI 协议
+        """
+
+    def __call__(self, event_or_environ, context_or_start_response):
+        if not isinstance(event_or_environ, bytes):  # WSGI 接口调用
             return self.app(event_or_environ, context_or_start_response)
         # 处理 API 网关调用
         request = HTTPRequest(event_or_environ, context_or_start_response)
-        resp_dict = {}
+        resp_dict: Dict[str, Any] = {}
         environ = build_environ(request, self.errors)
         start_response = create_start_response(resp_dict)
         body: Iterable[bytes] = [block for block in self.app(environ, start_response)]
